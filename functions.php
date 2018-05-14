@@ -64,7 +64,12 @@ add_shortcode( 'throttleup-track-1-complete', 'throttleup_track_1_complete' );
 function throttle_up_get_incorrect_answers( $form_id, $entry_id ) {
 
 	$entry = GFAPI::get_entry( $entry_id );
-	$form  = GFAPI::get_form( $form_id );
+
+	$form = unserialize( get_user_meta( wp_get_current_user()->ID, 'w30_track1_form', true ) );
+
+	if ( empty( $form ) ) {
+		$form = GFAPI::get_form( $form_id );
+	}
 
 	if ( is_wp_error( $entry ) || is_wp_error( $form ) ) {
 		return '<p><h2>There was an error. Please go back and try again.</h2></p>';
@@ -148,14 +153,9 @@ function throttleup_update_usermeta( $entry, $form ) {
 
 	switch ( $entry['form_id'] ) {
 		case 2:
-//			if ( empty( get_user_meta( wp_get_current_user()->ID, 'w30_track1_last', true ) ) ) {
-				update_user_meta( wp_get_current_user()->ID, 'w30_track1', $entry['gquiz_score'] );
-				update_user_meta( wp_get_current_user()->ID, 'w30_track1_last', $entry['id'] );
-//			} else {
-//				GFAPI::delete_entry( $entry['id'] );
-//				wp_redirect( get_site_url() . '/my-account' );
-//				exit;
-//			}
+			update_user_meta( wp_get_current_user()->ID, 'w30_track1', $entry['gquiz_score'] );
+			update_user_meta( wp_get_current_user()->ID, 'w30_track1_form', serialize( $form ) );
+			update_user_meta( wp_get_current_user()->ID, 'w30_track1_last', $entry['id'] );
 			break;
 		case 4:
 			update_user_meta( wp_get_current_user()->ID, 'w30_track2', 'Pending' );
@@ -182,7 +182,7 @@ function throttleup_redirects() {
 		$track1_timer_start = get_user_meta( $current_user->ID, 'track1_timer_start', true );
 
 		if ( empty( $track1_timer_start ) ) {
-		    $time = time();
+			$time = time();
 			update_user_meta( $current_user->ID, 'track1_timer_start', $time );
 			$track1_timer_start = $time;
 		}
@@ -194,7 +194,7 @@ function throttleup_redirects() {
 
 		/* Check if the I understand redirect applies */
 		$search_criteria['field_filters'][] = array( 'key' => 'created_by', 'value' => wp_get_current_user()->ID );
-		$entries = GFAPI::get_entries( THROTTLEUP_TRACKS_TRACK_1_FORM, $search_criteria );
+		$entries                            = GFAPI::get_entries( THROTTLEUP_TRACKS_TRACK_1_FORM, $search_criteria );
 
 		if ( ! empty( $entries ) && empty( $entries[0]['partial_entry_id'] ) ) {
 
@@ -237,7 +237,7 @@ function throttleup_debug() {
 
 	/* Check if the I understand redirect applies */
 	$search_criteria['field_filters'][] = array( 'key' => 'created_by', 'value' => wp_get_current_user()->ID );
-	$entries = GFAPI::get_entries( THROTTLEUP_TRACKS_TRACK_1_FORM, $search_criteria );
+	$entries                            = GFAPI::get_entries( THROTTLEUP_TRACKS_TRACK_1_FORM, $search_criteria );
 
 	var_dump( '<pre>' );
 	var_dump( ! empty( $entries ) );
